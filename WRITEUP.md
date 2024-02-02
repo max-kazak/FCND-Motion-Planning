@@ -22,30 +22,34 @@ Starter code implements methods for takeoff, waypoints following, and landing. T
 #### 1. Set your global home position
 Here students should read the first line of the csv file, extract lat0 and lon0 as floating point values and use the self.set_home_position() method to set global home. Explain briefly how you accomplished this in your code.
 
-
-And here is a lovely picture of our downtown San Francisco environment from above!
-![Map of SF](./misc/map.png)
+> I wrote `read_latlon` function that extracts latitude and longitude from collisions.csv file and used these parameters in `set_home_position` method.
 
 #### 2. Set your current local position
 Here as long as you successfully determine your local position relative to global home you'll be all set. Explain briefly how you accomplished this in your code.
 
-
-Meanwhile, here's a picture of me flying through the trees!
-![Forest Flying](./misc/in_the_trees.png)
+> I determined drone current global position via `self.global_position` variable. Then converted that global position to loval one using `global_to_local` function.
 
 #### 3. Set grid start position from local position
 This is another step in adding flexibility to the start location. As long as it works you're good to go!
 
+>Grid start position is determined from `local_to_grid` function that I added to `planning_utils.py`.
+
 #### 4. Set grid goal position from geodetic coords
 This step is to add flexibility to the desired goal location. Should be able to choose any (lat, lon) within the map and have it rendered to a goal location on the grid.
+
+>To get grid goal position:
+> 1. Get local goal position from global goal using global_to_local function.
+> 2. Similar to start position, convert local goal position to grid goal via `local_to_grid` function.
 
 #### 5. Modify A* to include diagonal motion (or replace A* altogether)
 Minimal requirement here is to modify the code in planning_utils() to update the A* implementation to include diagonal motions on the grid that have a cost of sqrt(2), but more creative solutions are welcome. Explain the code you used to accomplish this step.
 
+> I've added NW, NE, SE, and SW actions to `Action` enum. I've also added penalty cost to heuristic for choosing action that is different from the previous one.
+
 #### 6. Cull waypoints 
 For this step you can use a collinearity test or ray tracing method like Bresenham. The idea is simply to prune your path of unnecessary waypoints. Explain the code you used to accomplish this step.
 
-
+> Waypoints are culled using `prune_path` function that utilizes `collinearity_check` to verify if points are on the same line. Only points that are not on the same line are added to the pruned path.
 
 ### Execute the flight
 #### 1. Does it work?
