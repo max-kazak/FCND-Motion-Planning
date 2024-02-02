@@ -61,6 +61,8 @@ class Action(Enum):
     SE = (1, 1, np.sqrt(2))
     SW = (1, -1, np.sqrt(2))
 
+    STAY = (0, 0, 0)
+
     @property
     def cost(self):
         return self.value[2]
@@ -77,6 +79,9 @@ def valid_actions(grid, current_node):
     valid_actions = list(Action)
     n, m = grid.shape[0] - 1, grid.shape[1] - 1
     x, y = current_node
+
+    # remove STAY
+    valid_actions.remove(Action.STAY)
 
     # check if the node is off the grid or
     # it's an obstacle
@@ -107,7 +112,7 @@ def a_star(grid, h, start, goal):
     path = []
     path_cost = 0
     queue = PriorityQueue()
-    queue.put((0, start))
+    queue.put((0, start, Action.STAY))
     visited = set(start)
 
     branch = {}
@@ -116,6 +121,7 @@ def a_star(grid, h, start, goal):
     while not queue.empty():
         item = queue.get()
         current_node = item[1]
+        current_action = item[2]
         if current_node == start:
             current_cost = 0.0
         else:              
@@ -131,12 +137,13 @@ def a_star(grid, h, start, goal):
                 da = action.delta
                 next_node = (current_node[0] + da[0], current_node[1] + da[1])
                 branch_cost = current_cost + action.cost
-                queue_cost = branch_cost + h(next_node, goal)
+                diff_action_penalty = 0 if action == current_action else 2
+                queue_cost = branch_cost + h(next_node, goal) + diff_action_penalty
                 
                 if next_node not in visited:                
                     visited.add(next_node)               
                     branch[next_node] = (branch_cost, current_node, action)
-                    queue.put((queue_cost, next_node))
+                    queue.put((queue_cost, next_node, action))
              
     if found:
         # retrace steps
@@ -183,7 +190,7 @@ def point(p):
 def collinearity_check(p1, p2, p3, epsilon=1e-2):
     mat = np.vstack((point(p1), point(p2), point(p3)))
     det = np.linalg.det(mat)
-    print(abs(det))
+    # print(abs(det))
     return abs(det) < epsilon
 
 
