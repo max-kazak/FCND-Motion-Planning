@@ -56,6 +56,11 @@ class Action(Enum):
     NORTH = (-1, 0, 1)
     SOUTH = (1, 0, 1)
 
+    NW = (-1, -1, np.sqrt(2))
+    NE = (-1, 1, np.sqrt(2))
+    SE = (1, 1, np.sqrt(2))
+    SW = (1, -1, np.sqrt(2))
+
     @property
     def cost(self):
         return self.value[2]
@@ -84,6 +89,15 @@ def valid_actions(grid, current_node):
         valid_actions.remove(Action.WEST)
     if y + 1 > m or grid[x, y + 1] == 1:
         valid_actions.remove(Action.EAST)
+
+    if x - 1 < 0 or y - 1 < 0 or grid[x - 1, y - 1] == 1:
+        valid_actions.remove(Action.NW)
+    if x - 1 < 0 or  y + 1 > m or grid[x - 1, y + 1] == 1:
+        valid_actions.remove(Action.NE)
+    if x + 1 > n or y + 1 > m or grid[x + 1, y + 1] == 1:
+        valid_actions.remove(Action.SE)
+    if x + 1 > n or y - 1 < 0 or grid[x + 1, y - 1] == 1:
+        valid_actions.remove(Action.SW)
 
     return valid_actions
 
@@ -144,3 +158,40 @@ def a_star(grid, h, start, goal):
 def heuristic(position, goal_position):
     return np.linalg.norm(np.array(position) - np.array(goal_position))
 
+
+def read_latlon(filepath):
+    # extract latitude and longitude from colliders file
+    latstr, lonstr = np.loadtxt(filepath, delimiter=', ', dtype='str', max_rows=1, unpack=True)
+    return np.float64(latstr[5:]), np.float64(lonstr[5:])
+
+
+def local_to_grid(local_pos, grid, east_offset, north_offset):
+    # convert local pos to grid coords based on grid offsets
+    y = np.clip(int(local_pos[0] - north_offset), 0, grid.shape[0])
+    x = np.clip(int(local_pos[1] - east_offset), 0, grid.shape[1])
+    return y, x
+
+
+def grid_to_local(grid_pos, east_offset, north_offset):
+    return grid_pos[0] + north_offset, grid_pos[1] + east_offset
+
+
+def point(p):
+    return np.array([p[0], p[1], 1.]).reshape(1, -1)
+
+
+def collinearity_check(p1, p2, p3, epsilon=1e-2):
+    mat = np.vstack((point(p1), point(p2), point(p3)))
+    det = np.linalg.det(mat)
+    print(abs(det))
+    return abs(det) < epsilon
+
+
+def prune_path(path):
+    pruned_path = [path[0]]
+
+    for i in range(1, len(path)-1):
+        if not collinearity_check(pruned_path[-1], path[i], path[i+1]):
+            pruned_path.append(path[i])
+
+    return pruned_path
